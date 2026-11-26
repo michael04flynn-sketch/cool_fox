@@ -1,34 +1,17 @@
 @echo off
 setlocal EnableExtensions DisableDelayedExpansion
-if not defined VICTORY_GAME_DIR set "VICTORY_GAME_DIR=C:\Users\Léo\Downloads\GTA\GTA6.Xbox.v1.0.2.1-CYBERLEEK"
-set "runner=%~dp0target\release\victory.exe"
-if not exist "%runner%" set "runner=%~dp0victory-3d-rtx-pareto-residency.exe"
-
-set "VICTORY_CACHE_DIR=%LOCALAPPDATA%\VIctory\cache-pareto"
-set "VICTORY_AMBIENT_AIR=1.5"
-set "VICTORY_AMBIENT=0.8"
-set "VICTORY_TEXTURE_NO_WAIT=1"
-set "VICTORY_RELAY=2"
-set "VICTORY_WIDE_BACK=1"
-set "VICTORY_CARD_REHASH_RUNS=1"
-set "VICTORY_JOIN_COPIES=1"
-set "VICTORY_INDIRECT_WINDOW=1"
-set "VICTORY_RELAY_COPY=1"
-set "VICTORY_CARD_STEPS=2"
-set "VICTORY_INDIRECT_BATCH=2"
-set "VICTORY_MAP_THREADS=1"
-set "VICTORY_CARD_AWAKE=1"
-set "VICTORY_SHOW_AFTER=1"
-set "VICTORY_THIN=1"
-set "VICTORY_JOIN_PARTS=8"
-set "VICTORY_UPLOAD_AHEAD=1"
-set "VICTORY_LEVELS_ON_DEMAND=1"
-
-:: 4 GB VRAM tuning: reduce card-buffer thrashing and driver background recompile threads
-set "VICTORY_CARD_BUFFERS_MIN_KB=4096"
-set "VICTORY_CARD_BUFFERS_MB=256"
-set "VICTORY_D3D12_BACKGROUND=0"
-if not defined VICTORY_LOG set "VICTORY_LOG=warn"
-
-"%runner%" run "%VICTORY_GAME_DIR%\game_scarlett_master.exe" --console series-s --execute
+rem Play-VIctory.cmd with less of the card's memory used, for 4-8 GB cards.
+rem Everything else is that launcher's: the checks, Series X, the measured
+rem defaults. Any VICTORY_... variable set before this runs is kept.
+rem
+rem Title buffers of 4 MiB and up get a copy on the card (Play-VIctory.cmd:
+rem 64 KiB and up), and those copies hold at most 256 MiB (the default on a
+rem card of 12 GB or less is 512 MiB). See card_limits in shadow.rs.
+if not defined VICTORY_CARD_BUFFERS_MIN_KB set "VICTORY_CARD_BUFFERS_MIN_KB=4096"
+if not defined VICTORY_CARD_BUFFERS_MB set "VICTORY_CARD_BUFFERS_MB=256"
+rem The driver's background shader recompiles off (host.rs).
+if not defined VICTORY_D3D12_BACKGROUND set "VICTORY_D3D12_BACKGROUND=0"
+rem Still out of memory: VICTORY_CONSOLE=series-s, at the price of the faces
+rem of people in the world (Play-VIctory.cmd says why).
+call "%~dp0Play-VIctory.cmd" %*
 exit /b %errorlevel%
