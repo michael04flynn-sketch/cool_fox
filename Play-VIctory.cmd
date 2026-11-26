@@ -47,5 +47,8 @@ if not defined VICTORY_CARD_BUFFERS_MIN_KB set "VICTORY_CARD_BUFFERS_MIN_KB=64"
 if not defined VICTORY_LOG if not defined RUST_LOG set "VICTORY_LOG=warn"
 rem Series X, not S: on an 8 GB card series-s drops the head/skin meshes (faces
 rem render as eyes and teeth only); series-x renders them. Verified 2026-11-26.
-"%runner%" run "%VICTORY_GAME_DIR%\game_scarlett_master.exe" --console series-x --execute
+rem VICTORY_CONSOLE=series-s (read here only) asks the title for less memory
+rem all the same.
+if not defined VICTORY_CONSOLE set "VICTORY_CONSOLE=series-x"
+"%runner%" run "%VICTORY_GAME_DIR%\game_scarlett_master.exe" --console "%VICTORY_CONSOLE%" --execute
 exit /b %errorlevel%

@@ -24,7 +24,7 @@ This build unites the cutting-edge optimizations from leading PortWatch projects
 
 ## How to Run
 
-You need Windows 10/11 x64, a CPU with AVX2, a Direct3D 12 GPU with shader model 6.6 and mesh shaders, Rust (1.98+), MSVC build tools, and your own legal Xbox Series dump of the game.
+You need Windows 10/11 x64, a CPU with AVX2, a Direct3D 12 GPU with shader model 6.6 and mesh shaders, the Rust toolchain pinned in `rust-toolchain.toml` (rustup installs it on the first build), the MSVC C++ build tools with a Windows SDK, and your own legal Xbox Series dump of the game.
 
 ### Build from Source
 
@@ -36,31 +36,46 @@ cargo build --release --locked -p victory
 
 ### Launch
 
+`VICTORY_GAME_DIR` is the folder of your dump that holds `game_scarlett_master.exe`. Keep it outside this checkout.
+
 ```powershell
 $env:VICTORY_GAME_DIR = 'D:\Games\MyDump'
 .\Play-VIctory.cmd
 ```
 
-For 4GB / 8GB VRAM laptops or low-memory systems, you can also launch with:
+The launcher stops with a message if `game_scarlett_master.exe` is not in that folder. It runs `victory-3d-rtx-pareto-residency.exe` from an extracted Windows release when there is one, otherwise `target\release\victory.exe`, keeps its shader cache in `%LOCALAPPDATA%\VIctory\cache-pareto` (`VICTORY_CACHE_DIR` moves it) and starts the Series X profile. Every `VICTORY_...` variable set before it runs is kept, so one setting can be tried without editing the file:
+
+```powershell
+$env:VICTORY_THIN = '1'   # faster recording; on NVIDIA the faces of playable people go
+.\Play-VIctory.cmd
+```
+
+On a card with 4-8 GB of memory, `Play-VIctory-4GB.cmd` is the same launcher with fewer title buffers copied to the card (4 MiB and up, at most 256 MiB of them) and the driver's background shader work off:
 
 ```powershell
 .\Play-VIctory-4GB.cmd
 ```
 
----
+If the card still runs out of memory, `$env:VICTORY_CONSOLE = 'series-s'` makes the title ask for less, at the price of people's heads in the world.
 
-## Upstream & Acknowledgements
+### Known issues
 
-- **codec-d / CGBJ:** Original `cool_fox` runtime and pareto residency architecture.
-- **AvatarManz (VIctory-7900XTX):** Multi-threaded command list recording, framerate unlocking, and renderer ports.
-- **DexNom:** Wave64 lowering, scalar recovery, and shader structure passes.
-- **Belobug:** Ambient lighting and integer target blend protections.
-- **Marvisak & fxceless:** Foundational VIctory compatibility layer.
+- With `series-s`, or `VICTORY_THIN=1` on NVIDIA, people's heads in the world draw only their eyes and teeth.
+- `VICTORY_JOIN_PARTS=8` repeats frames of the opening video.
+- Trees, plants and far buildings flicker outdoors in some places.
+- Rooms with little direct light are dark without ray tracing (`scripts\play.ps1 -RayTracing`).
+- Textures of what just came into view appear late while the title streams.
+- The first run with a new driver or a new build stutters while the driver makes pipelines (`victory warm` makes them ahead).
+- Recording a frame in the world makes the title's own watchdog end it.
 
-**Legal notice:** This repository contains no copyrighted game code, assets, or executables. All code is licensed under GPL-3.0-or-later.
+### Diagnostics build
+
+For measuring and debugging. `scripts\play.ps1` reads your paths from `victory.toml` and, without `-Safe`, turns `VICTORY_THIN` and `VICTORY_JOIN_PARTS` on.
+
+```powershell
 copy victory.example.toml victory.toml      # then set your paths, outside this folder
 cargo build --locked --profile diag -p victory --features diagnostics
-scripts\play.ps1 -Exe <path of your copy's executable>
+scripts\play.ps1 -Exe <your dump folder>\game_scarlett_master.exe
 ```
 
 `scripts\play.ps1 -Safe` leaves out the newest, faster ways; try it first when
@@ -98,6 +113,16 @@ In short; the reasons and the measurements are in [docs/findings.md](docs/findin
   to title memory (from fxceless and Geckomacabre, on by default here).
 - **Frame record and replay** with per-pass times and shader variants compared
   turn by turn ([docs/replay.md](docs/replay.md)).
+
+## Upstream & Acknowledgements
+
+- **codec-d / CGBJ:** Original `cool_fox` runtime and pareto residency architecture.
+- **AvatarManz (VIctory-7900XTX):** Multi-threaded command list recording, framerate unlocking, and renderer ports.
+- **DexNom:** Wave64 lowering, scalar recovery, and shader structure passes.
+- **Belobug:** Ambient lighting and integer target blend protections.
+- **Marvisak & fxceless:** Foundational VIctory compatibility layer.
+
+**Legal notice:** This repository contains no copyrighted game code, assets, or executables. All code is licensed under GPL-3.0-or-later.
 
 ## Credits
 
